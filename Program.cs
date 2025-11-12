@@ -7,6 +7,7 @@ using System.Text;
 using BackBird.Api.src.Bird.Modules.Users.Infrastructure.Config;
 using System;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,6 +84,53 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+// Crear tablas manualmente si no existen
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var usersDb = services.GetRequiredService<BackBird.Api.src.Bird.Modules.Users.Infrastructure.Persistence.UsersDbContext>();
+    
+    // Asegurar que la base de datos existe
+    usersDb.Database.EnsureCreated();
+    
+    // Crear tabla Users si no existe (manual por problemas multi-context)
+    var conn = usersDb.Database.GetDbConnection();
+    conn.Open();
+    using var cmd = conn.CreateCommand();
+    cmd.CommandText = @"
+        CREATE TABLE IF NOT EXISTS Users (
+            Id TEXT PRIMARY KEY,
+            Email TEXT NOT NULL UNIQUE,
+            Name TEXT NOT NULL,
+            PasswordHash TEXT NOT NULL,
+            Role INTEGER NOT NULL,
+            Created_At TEXT NOT NULL,
+            Updated_At TEXT NOT NULL
+        );
+    ";
+    cmd.ExecuteNonQuery();
+    conn.Close();
+    
+    // Seed admin user if not exists
+    var userRepo = services.GetRequiredService<BackBird.Api.src.Bird.Modules.Users.Domain.Repositories.IUserRepository>();
+    var hasher = services.GetRequiredService<BackBird.Api.src.Bird.Modules.Users.Domain.Interfaces.IPasswordHasher>();
+    
+    var adminEmail = "admin@test.com";
+    var existingAdmin = await userRepo.GetByEmailAsync(adminEmail);
+    if (existingAdmin == null)
+    {
+        var adminHash = hasher.Hash("Admin123!");
+        var admin = new BackBird.Api.src.Bird.Modules.Users.Domain.Entities.User(
+            adminEmail,
+            adminHash,
+            "Admin Test",
+            BackBird.Api.src.Bird.Modules.Users.Domain.Enums.Role.Admin
+        );
+        await userRepo.AddAsync(admin);
+        Console.WriteLine("✅ Usuario admin creado: admin@test.com / Admin123!");
+    }
+}
 
 // Enable middleware for Swagger in development
 if (app.Environment.IsDevelopment())
