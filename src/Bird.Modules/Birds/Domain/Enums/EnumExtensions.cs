@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Reflection;
 
-namespace Bird.Modules.Birds.Domain.Enums
+namespace BackBird.Api.src.Bird.Modules.Birds.Domain.Enums
 {
     public static class EnumExtensions
     {

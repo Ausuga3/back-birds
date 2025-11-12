@@ -1,7 +1,7 @@
 ﻿using BackBird.Api.src.Bird.Modules.Users.Domain.Entities;
 using BackBird.Api.src.Bird.Modules.Users.Domain.Interfaces;
 using BackBird.Api.src.Bird.Modules.Users.Domain.Repositories;
-using Microsoft.AspNetCore.Identity;
+
 
 namespace BackBird.Api.src.Bird.Modules.Users.Aplication.Commands.CreateUser
 {

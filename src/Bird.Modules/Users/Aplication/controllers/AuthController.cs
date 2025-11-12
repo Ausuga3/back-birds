@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.Extensions.Logging;
+using System.Text.Json.Serialization;
 
 namespace BackBird.Api.src.Bird.Modules.Users.Aplication.Controllers
 {
@@ -43,8 +44,36 @@ namespace BackBird.Api.src.Bird.Modules.Users.Aplication.Controllers
         }
 
         public class LoginRequest { public string Email { get; set; } = ""; public string Password { get; set; } = ""; }
-        public class UserDto { public Guid Id { get; set; } public string Email { get; set; } = ""; public string Name { get; set; } = ""; public string Role { get; set; } = ""; }
-        public class LoginResponse { public UserDto User { get; set; } = new UserDto(); public string Token { get; set; } = ""; }
+        
+        public class UserDto 
+        { 
+            [JsonPropertyName("id")]
+            public Guid Id { get; set; }
+            
+            [JsonPropertyName("email")]
+            public string Email { get; set; } = "";
+            
+            [JsonPropertyName("name")]
+            public string Name { get; set; } = "";
+            
+            [JsonPropertyName("role")]
+            public string Role { get; set; } = "";
+            
+            [JsonPropertyName("isActive")]
+            public bool IsActive { get; set; } = true;
+            
+            [JsonPropertyName("createdAt")]
+            public DateTime CreatedAt { get; set; }
+        }
+        
+        public class LoginResponse 
+        { 
+            [JsonPropertyName("user")]
+            public UserDto User { get; set; } = new UserDto();
+            
+            [JsonPropertyName("token")]
+            public string Token { get; set; } = ""; 
+        }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
@@ -73,7 +102,15 @@ namespace BackBird.Api.src.Bird.Modules.Users.Aplication.Controllers
             var resp = new LoginResponse
             {
                 Token = token,
-                User = new UserDto { Id = user.Id, Email = user.Email, Name = user.Name, Role = user.Role.ToString() }
+                User = new UserDto 
+                { 
+                    Id = user.Id, 
+                    Email = user.Email, 
+                    Name = user.Name, 
+                    Role = user.Role.ToString(),
+                    IsActive = true,
+                    CreatedAt = user.Created_At
+                }
             };
 
             return Ok(resp);

@@ -4,15 +4,16 @@ using System.Threading.Tasks;
 using BackBird.Api.src.Bird.Modules.Users.Infrastructure.Persistence;
 using BackBird.Api.src.Bird.Modules.Users.Aplication.Models.Dto;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 namespace BackBird.Api.src.Bird.Api.Controllers
 {
  [ApiController]
- [Route("api/[controller]")]
- // [Authorize] // Uncomment in production to protect this route
+ [Route("api/users")]
  public class UsersController : ControllerBase
  {
  private readonly UsersDbContext _db;
+ 
  public UsersController(UsersDbContext db)
  {
  _db = db;
@@ -31,7 +32,7 @@ namespace BackBird.Api.src.Bird.Api.Controllers
  Email = user.Email,
  RolName = user.Role.ToString(),
  IsActive = true,
- CreatedAt = null
+ CreatedAt = user.Created_At
  };
 
  return Ok(dto);

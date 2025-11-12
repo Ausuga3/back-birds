@@ -7,12 +7,11 @@ namespace BackBird.Api.src.Bird.Modules.Users.Domain.Entities
     {
         public Guid Id { get; private set; }
         public string Name { get; private set; }
-
         public string Email { get; private set; }
-
         public string PasswordHash { get; private set; }
-
         public Role Role { get; private set; }
+        public DateTime Created_At { get; private set; }
+        
         public User(
             string email,
             string passwordHash,
@@ -24,9 +23,9 @@ namespace BackBird.Api.src.Bird.Modules.Users.Domain.Entities
             PasswordHash = passwordHash;
             Name = name;
             Role = role;
+            Created_At = DateTime.UtcNow;
         }
 
         protected User() { }
-        
     }
 }

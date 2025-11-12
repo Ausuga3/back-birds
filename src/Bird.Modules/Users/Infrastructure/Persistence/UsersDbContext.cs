@@ -18,6 +18,7 @@ namespace BackBird.Api.src.Bird.Modules.Users.Infrastructure.Persistence
                 eb.Property(u => u.Email).IsRequired();
                 eb.Property(u => u.PasswordHash).IsRequired();
                 eb.Property(u => u.Name).IsRequired();
+                eb.Property(u => u.Created_At).IsRequired();
             });
 
             base.OnModelCreating(modelBuilder);
