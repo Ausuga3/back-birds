@@ -2,9 +2,8 @@
 using BackBird.Api.src.Bird.Modules.Users.Domain.Repositories;
 using BackBird.Api.src.Bird.Modules.Users.Infrastructure.Persistence;
 using BackBird.Api.src.Bird.Modules.Users.Infrastructure.Services;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+
 
 namespace BackBird.Api.src.Bird.Modules.Users.Infrastructure.Config
 {

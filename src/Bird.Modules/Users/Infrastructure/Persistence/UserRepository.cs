@@ -29,5 +29,16 @@ namespace BackBird.Api.src.Bird.Modules.Users.Infrastructure.Persistence
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
         }
+
+        public async Task UpdateAsync(User user)
+        {
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<User>> GetAllAsync()
+        {
+            return await _context.Users.ToListAsync();
+        }
     }
 }

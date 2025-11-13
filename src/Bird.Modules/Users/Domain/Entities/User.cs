@@ -29,6 +29,26 @@ namespace BackBird.Api.src.Bird.Modules.Users.Domain.Entities
         }
 
         protected User() { }
+
+        /// <summary>
+        /// Actualiza los datos del usuario
+        /// </summary>
+        public void Update(string? name, string? email, Role? role, bool? isActive)
+        {
+            if (!string.IsNullOrWhiteSpace(name))
+                Name = name;
+            
+            if (!string.IsNullOrWhiteSpace(email))
+                Email = email;
+            
+            if (role.HasValue)
+                Role = role.Value;
+
+            // Nota: isActive no está implementado en la entidad actual
+            // Si quieres agregarlo, necesitas agregar la propiedad IsActive
+            
+            Updated_At = DateTime.UtcNow;
+        }
         
     }
 }

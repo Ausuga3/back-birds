@@ -2,6 +2,7 @@
 using BackBird.Api.src.Bird.Modules.Users.Domain.Entities;
 using BackBird.Api.src.Bird.Modules.Users.Domain.Interfaces;
 using BackBird.Api.src.Bird.Modules.Users.Domain.Repositories;
+using BackBird.Api.src.Bird.Modules.Users.Aplication.Models.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -39,11 +40,18 @@ namespace BackBird.Api.src.Bird.Modules.Users.Aplication.Controllers
             var user = new User(request.Email, hash, request.Name, request.Role);
             await _repo.AddAsync(user);
 
-            return Created(string.Empty, new { id = user.Id, email = user.Email, name = user.Name, role = user.Role.ToString() });
+            return Created(string.Empty, new UserDto 
+            { 
+                Id = user.Id, 
+                Email = user.Email, 
+                Name = user.Name, 
+                RolName = user.Role.ToString(),
+                IsActive = true,
+                CreatedAt = user.Created_At
+            });
         }
 
         public class LoginRequest { public string Email { get; set; } = ""; public string Password { get; set; } = ""; }
-        public class UserDto { public Guid Id { get; set; } public string Email { get; set; } = ""; public string Name { get; set; } = ""; public string Role { get; set; } = ""; }
         public class LoginResponse { public UserDto User { get; set; } = new UserDto(); public string Token { get; set; } = ""; }
 
         [HttpPost("login")]
@@ -73,7 +81,15 @@ namespace BackBird.Api.src.Bird.Modules.Users.Aplication.Controllers
             var resp = new LoginResponse
             {
                 Token = token,
-                User = new UserDto { Id = user.Id, Email = user.Email, Name = user.Name, Role = user.Role.ToString() }
+                User = new UserDto 
+                { 
+                    Id = user.Id, 
+                    Email = user.Email, 
+                    Name = user.Name, 
+                    RolName = user.Role.ToString(),
+                    IsActive = true,
+                    CreatedAt = user.Created_At
+                }
             };
 
             return Ok(resp);

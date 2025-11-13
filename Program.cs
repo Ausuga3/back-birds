@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using BackBird.Api.src.Bird.Modules.Users.Infrastructure.Config;
+using BackBird.Api.src.Bird.Modules.Birds.Infrastructure.Config;
 using System;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,7 @@ builder.Services.AddControllers()
 	});
 // registrar la infraestructura (DbContext, repos, servicios)
 builder.Services.AddUsersInfrastructure(builder.Configuration);
+builder.Services.AddBirdsInfrastructure(builder.Configuration);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
  .AddJwtBearer(options =>
@@ -110,6 +112,23 @@ using (var scope = app.Services.CreateScope())
         );
     ";
     cmd.ExecuteNonQuery();
+    
+    // Crear tabla Birds si no existe
+    cmd.CommandText = @"
+        CREATE TABLE IF NOT EXISTS Birds (
+            Id TEXT PRIMARY KEY,
+            CommonName TEXT NOT NULL,
+            ScientificName TEXT NOT NULL,
+            Family INTEGER NOT NULL,
+            Notes TEXT NOT NULL,
+            ConservationStatus INTEGER NOT NULL,
+            Created_At TEXT NOT NULL,
+            Updated_At TEXT NOT NULL,
+            Created_By TEXT NOT NULL
+        );
+    ";
+    cmd.ExecuteNonQuery();
+    
     conn.Close();
     
     // Seed admin user if not exists
