@@ -10,6 +10,7 @@ namespace BackBird.Api.src.Bird.Modules.Users.Domain.Entities
         public string Email { get; private set; }
         public string PasswordHash { get; private set; }
         public Role Role { get; private set; }
+        public bool IsActive { get; private set; }
         public DateTime Created_At { get; private set; }
         public DateTime Updated_At { get; private set; }
         
@@ -24,6 +25,7 @@ namespace BackBird.Api.src.Bird.Modules.Users.Domain.Entities
             PasswordHash = passwordHash;
             Name = name;
             Role = role;
+            IsActive = true; // Por defecto activo
             Created_At = DateTime.UtcNow;
             Updated_At = DateTime.UtcNow;
         }
@@ -44,8 +46,8 @@ namespace BackBird.Api.src.Bird.Modules.Users.Domain.Entities
             if (role.HasValue)
                 Role = role.Value;
 
-            // Nota: isActive no está implementado en la entidad actual
-            // Si quieres agregarlo, necesitas agregar la propiedad IsActive
+            if (isActive.HasValue)
+                IsActive = isActive.Value;
             
             Updated_At = DateTime.UtcNow;
         }

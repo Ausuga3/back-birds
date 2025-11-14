@@ -4,8 +4,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Security.Claims;
 using BackBird.Api.src.Bird.Modules.Users.Infrastructure.Config;
 using BackBird.Api.src.Bird.Modules.Birds.Infrastructure.Config;
+using Bird.Modules.Sightings;
 using System;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
@@ -38,6 +40,10 @@ builder.Services.AddControllers()
 builder.Services.AddUsersInfrastructure(builder.Configuration);
 builder.Services.AddBirdsInfrastructure(builder.Configuration);
 
+// Sightings module
+var sightingsConnectionString = "Data Source=backbird.db";
+builder.Services.AddSightingsInfrastructure(sightingsConnectionString);
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
  .AddJwtBearer(options =>
  {
@@ -68,16 +74,24 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
  options.Events = new JwtBearerEvents
  {
+ OnTokenValidated = ctx =>
+ {
+ var logger = ctx.HttpContext.RequestServices.GetService<Microsoft.Extensions.Logging.ILoggerFactory>()?.CreateLogger("JwtBearer");
+ var userId = ctx.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+ var role = ctx.Principal?.FindFirst(ClaimTypes.Role)?.Value;
+ logger?.LogInformation($"✅ Token validated successfully - UserId: {userId}, Role: {role}");
+ return System.Threading.Tasks.Task.CompletedTask;
+ },
  OnAuthenticationFailed = ctx =>
  {
  var logger = ctx.HttpContext.RequestServices.GetService<Microsoft.Extensions.Logging.ILoggerFactory>()?.CreateLogger("JwtBearer");
- logger?.LogError(ctx.Exception, "Authentication failed");
+ logger?.LogError(ctx.Exception, "❌ JWT Authentication failed");
  return System.Threading.Tasks.Task.CompletedTask;
  },
  OnChallenge = context =>
  {
  var logger = context.HttpContext.RequestServices.GetService<Microsoft.Extensions.Logging.ILoggerFactory>()?.CreateLogger("JwtBearer");
- logger?.LogWarning("JwtBearer challenge: {0}", context.ErrorDescription);
+ logger?.LogWarning("⚠️ JwtBearer challenge: {0}", context.ErrorDescription);
  return System.Threading.Tasks.Task.CompletedTask;
  }
  };
@@ -107,11 +121,25 @@ using (var scope = app.Services.CreateScope())
             Name TEXT NOT NULL,
             PasswordHash TEXT NOT NULL,
             Role INTEGER NOT NULL,
+            IsActive INTEGER NOT NULL DEFAULT 1,
             Created_At TEXT NOT NULL,
             Updated_At TEXT NOT NULL
         );
     ";
     cmd.ExecuteNonQuery();
+    
+    // Agregar columna IsActive si no existe (para bases de datos existentes)
+    cmd.CommandText = @"
+        ALTER TABLE Users ADD COLUMN IsActive INTEGER NOT NULL DEFAULT 1;
+    ";
+    try
+    {
+        cmd.ExecuteNonQuery();
+    }
+    catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.Message.Contains("duplicate column"))
+    {
+        // La columna ya existe, ignorar el error
+    }
     
     // Crear tabla Birds si no existe
     cmd.CommandText = @"
@@ -125,6 +153,23 @@ using (var scope = app.Services.CreateScope())
             Created_At TEXT NOT NULL,
             Updated_At TEXT NOT NULL,
             Created_By TEXT NOT NULL
+        );
+    ";
+    cmd.ExecuteNonQuery();
+    
+    // Crear tabla Sightings si no existe
+    cmd.CommandText = @"
+        CREATE TABLE IF NOT EXISTS Sightings (
+            Id TEXT PRIMARY KEY,
+            Latitude REAL NOT NULL,
+            Longitude REAL NOT NULL,
+            Country TEXT NOT NULL,
+            BirdId TEXT NOT NULL,
+            Notes TEXT,
+            CreatedBy TEXT,
+            CreatedAt TEXT NOT NULL,
+            UpdatedAt TEXT NOT NULL,
+            FOREIGN KEY (BirdId) REFERENCES Birds(Id)
         );
     ";
     cmd.ExecuteNonQuery();
