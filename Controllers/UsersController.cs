@@ -16,11 +16,13 @@ namespace BackBird.Api.Controllers
     {
         private readonly UsersDbContext _db;
         private readonly IUserRepository _userRepository;
+        private readonly ILogger<UsersController> _logger;
 
-        public UsersController(UsersDbContext db, IUserRepository userRepository)
+        public UsersController(UsersDbContext db, IUserRepository userRepository, ILogger<UsersController> logger)
         {
             _db = db;
             _userRepository = userRepository;
+            _logger = logger;
         }
 
         // GET api/Users
@@ -34,7 +36,7 @@ namespace BackBird.Api.Controllers
                 Name = user.Name,
                 Email = user.Email,
                 RolName = user.Role.ToString(),
-                IsActive = true, // TODO: Agregar IsActive a la entidad User si lo necesitas
+                IsActive = user.IsActive,
                 CreatedAt = user.Created_At
             }).ToList();
 
@@ -54,7 +56,7 @@ namespace BackBird.Api.Controllers
                 Name = user.Name,
                 Email = user.Email,
                 RolName = user.Role.ToString(),
-                IsActive = true,
+                IsActive = user.IsActive,
                 CreatedAt = user.Created_At
             };
 
@@ -68,13 +70,20 @@ namespace BackBird.Api.Controllers
         {
             try
             {
+                // Log de headers y claims
+                var authHeader = Request.Headers["Authorization"].ToString();
+                _logger.LogInformation($"[UsersController] Authorization Header: {(string.IsNullOrEmpty(authHeader) ? "MISSING" : "Present")}");
+                _logger.LogInformation($"[UsersController] User.Identity.IsAuthenticated: {User.Identity?.IsAuthenticated}");
+                
                 // Obtener el usuario autenticado
                 var actorIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var actorRoleClaim = User.FindFirst(ClaimTypes.Role)?.Value;
 
+                _logger.LogInformation($"[UsersController] UPDATE User {id} - Actor: {actorIdClaim}, Role: {actorRoleClaim}");
+
                 if (string.IsNullOrEmpty(actorIdClaim) || string.IsNullOrEmpty(actorRoleClaim))
                 {
-                    return Unauthorized("No se pudo identificar al usuario autenticado");
+                    return Unauthorized(new { message = "No se pudo identificar al usuario autenticado" });
                 }
 
                 if (!Guid.TryParse(actorIdClaim, out Guid actorId))
@@ -108,7 +117,7 @@ namespace BackBird.Api.Controllers
                     Name = updatedUser.Name,
                     Email = updatedUser.Email,
                     RolName = updatedUser.Role.ToString(),
-                    IsActive = true,
+                    IsActive = updatedUser.IsActive,
                     CreatedAt = updatedUser.Created_At
                 };
 
@@ -116,11 +125,11 @@ namespace BackBird.Api.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new { message = ex.Message });
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ex.Message);
+                return NotFound(new { message = ex.Message });
             }
             catch (Exception ex)
             {

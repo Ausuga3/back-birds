@@ -164,11 +164,11 @@ namespace BackBird.Api.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new { message = ex.Message });
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ex.Message);
+                return NotFound(new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -187,22 +187,28 @@ namespace BackBird.Api.Controllers
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var roleClaim = User.FindFirst(ClaimTypes.Role)?.Value;
 
+                _logger.LogInformation($"[BirdsController] DELETE Bird {id} - User: {userIdClaim}, Role: {roleClaim}");
+
                 if (string.IsNullOrEmpty(userIdClaim))
                 {
-                    return Unauthorized("Usuario no autenticado");
+                    return Unauthorized(new { message = "Usuario no autenticado" });
                 }
 
                 bool isAdmin = roleClaim?.ToLower() == "admin";
+                _logger.LogInformation($"[BirdsController] IsAdmin: {isAdmin}");
+                
                 var bird = await _birdRepository.GetByIdAsync(id);
 
                 if (bird == null)
                 {
-                    return NotFound($"Ave con ID {id} no encontrada");
+                    return NotFound(new { message = $"Ave con ID {id} no encontrada" });
                 }
+
+                _logger.LogInformation($"[BirdsController] Bird CreatedBy: {bird.Created_By}, UserIdClaim: {userIdClaim}, Match: {bird.Created_By == userIdClaim}");
 
                 if (!isAdmin && bird.Created_By != userIdClaim)
                 {
-                    return Forbid("No tienes permisos para eliminar esta ave");
+                    return StatusCode(403, new { message = "No tienes permisos para eliminar esta ave" });
                 }
 
                 await _birdRepository.DeleteAsync(id);

@@ -46,7 +46,7 @@ namespace BackBird.Api.src.Bird.Modules.Users.Aplication.Controllers
                 Email = user.Email, 
                 Name = user.Name, 
                 RolName = user.Role.ToString(),
-                IsActive = true,
+                IsActive = user.IsActive,
                 CreatedAt = user.Created_At
             });
         }
@@ -70,6 +70,12 @@ namespace BackBird.Api.src.Bird.Modules.Users.Aplication.Controllers
                 return Unauthorized();
             }
 
+            if (!user.IsActive)
+            {
+                _logger.LogWarning("Login failed for {Email}: user is inactive", request.Email);
+                return StatusCode(403, new { message = "Tu cuenta está deshabilitada" });
+            }
+
             if (!_hasher.Verify(request.Password, user.PasswordHash))
             {
                 _logger.LogInformation("Login failed for {Email}: invalid password", request.Email);
@@ -87,7 +93,7 @@ namespace BackBird.Api.src.Bird.Modules.Users.Aplication.Controllers
                     Email = user.Email, 
                     Name = user.Name, 
                     RolName = user.Role.ToString(),
-                    IsActive = true,
+                    IsActive = user.IsActive,
                     CreatedAt = user.Created_At
                 }
             };
